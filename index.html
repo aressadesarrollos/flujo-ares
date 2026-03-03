@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flujo ARES - WhatsApp AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c14;
+    --surface: #111420;
+    --surface2: #171b2e;
+    --border: rgba(99,120,255,0.18);
+    --accent: #4f6ef7;
+    --accent2: #7c3aed;
+    --accent3: #06b6d4;
+    --accent4: #10b981;
+    --accent5: #f59e0b;
+    --accent6: #ef4444;
+    --text: #e8eaf6;
+    --muted: #7b82a8;
+    --glow: rgba(79,110,247,0.35);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: auto;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 50% -20%, rgba(79,110,247,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(124,58,237,0.08) 0%, transparent 60%);
+  }
+
+  .page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+    animation: fadeUp 0.7s ease both;
+  }
+  .header-tag {
+    display: inline-block;
+    background: rgba(79,110,247,0.12);
+    border: 1px solid rgba(79,110,247,0.3);
+    color: var(--accent);
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+  .header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 800;
+    background: linear-gradient(135deg, #e8eaf6 30%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+  }
+  .header p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 8px;
+    font-weight: 300;
+  }
+
+  /* CONNECTOR LINES */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .connector {
+    width: 2px;
+    height: 32px;
+    background: linear-gradient(to bottom, rgba(79,110,247,0.6), rgba(79,110,247,0.2));
+    position: relative;
+    flex-shrink: 0;
+  }
+  .connector::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid rgba(79,110,247,0.7);
+  }
+
+  /* NODES */
+  .node {
+    position: relative;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  /* START/END CIRCLE */
+  .node-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, var(--surface2), var(--surface));
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 30px var(--glow), inset 0 1px 0 rgba(255,255,255,0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    cursor: default;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .node-circle:hover {
+    transform: scale(1.04);
+    box-shadow: 0 0 50px var(--glow), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .node-circle .icon { font-size: 22px; }
+  .node-circle .label {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    line-height: 1.2;
+    padding: 0 8px;
+  }
+
+  /* PROCESS BOX */
+  .node-box {
+    background: linear-gradient(145deg, var(--surface2), var(--surface));
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 28px;
+    text-align: center;
+    min-width: 240px;
+    max-width: 340px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
+    cursor: default;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .node-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(79,110,247,0.5), transparent);
+  }
+  .node-box:hover {
+    transform: translateY(-2px);
+    border-color: rgba(99,120,255,0.4);
+    box-shadow: 0 8px 32px rgba(79,110,247,0.15), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+
+  /* DIAMOND */
+  .diamond-wrap {
+    width: 200px;
+    height: 200px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .diamond-shape {
+    width: 140px;
+    height: 140px;
+    background: linear-gradient(145deg, var(--surface2), var(--surface));
+    border: 1.5px solid rgba(124,58,237,0.6);
+    transform: rotate(45deg);
+    box-shadow: 0 0 24px rgba(124,58,237,0.2);
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: absolute;
+  }
+  .diamond-wrap:hover .diamond-shape {
+    box-shadow: 0 0 40px rgba(124,58,237,0.4);
+  }
+  .diamond-label {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #c4b5fd;
+    letter-spacing: 0.03em;
+    line-height: 1.4;
+    padding: 0 24px;
+  }
+  .diamond-label small {
+    display: block;
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 2px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* BRANCH SECTION */
+  .branch-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: fadeUp 0.7s ease 0.2s both;
+  }
+
+  .branch-line-row {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    position: relative;
+    height: 40px;
+  }
+
+  /* Horizontal line across all branches */
+  .branch-h-line {
+    position: absolute;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(99,120,255,0.4) 15%, rgba(99,120,255,0.4) 85%, transparent);
+  }
+
+  .branches {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    width: 100%;
+    max-width: 900px;
+    padding: 0 4px;
+  }
+
+  .branch-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* BRANCH LABELS (category pills) */
+  .branch-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+  }
+  .label-ventas  { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+  .label-mant    { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+  .label-info    { background: rgba(6,182,212,0.12); color: #22d3ee; border: 1px solid rgba(6,182,212,0.3); }
+  .label-humano  { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+
+  /* BRANCH NODE VARIANTS */
+  .node-box.green {
+    border-color: rgba(16,185,129,0.35);
+    background: linear-gradient(145deg, rgba(16,185,129,0.07), var(--surface));
+  }
+  .node-box.green::before { background: linear-gradient(90deg, transparent, rgba(16,185,129,0.4), transparent); }
+
+  .node-box.amber {
+    border-color: rgba(245,158,11,0.35);
+    background: linear-gradient(145deg, rgba(245,158,11,0.07), var(--surface));
+  }
+  .node-box.amber::before { background: linear-gradient(90deg, transparent, rgba(245,158,11,0.4), transparent); }
+
+  .node-box.cyan {
+    border-color: rgba(6,182,212,0.35);
+    background: linear-gradient(145deg, rgba(6,182,212,0.07), var(--surface));
+  }
+  .node-box.cyan::before { background: linear-gradient(90deg, transparent, rgba(6,182,212,0.4), transparent); }
+
+  .node-box.red {
+    border-color: rgba(239,68,68,0.35);
+    background: linear-gradient(145deg, rgba(239,68,68,0.07), var(--surface));
+  }
+  .node-box.red::before { background: linear-gradient(90deg, transparent, rgba(239,68,68,0.4), transparent); }
+
+  /* DB node */
+  .node-db {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(145deg, rgba(16,185,129,0.07), var(--surface));
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 12px;
+    color: #34d399;
+    font-weight: 500;
+    width: 100%;
+  }
+  .node-db .db-icon { font-size: 18px; }
+
+  /* SMALL CONNECTOR */
+  .conn-sm {
+    width: 2px;
+    height: 20px;
+    background: linear-gradient(to bottom, rgba(99,120,255,0.5), rgba(99,120,255,0.2));
+    position: relative;
+  }
+  .conn-sm::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid rgba(99,120,255,0.6);
+  }
+  .conn-sm.green { background: linear-gradient(to bottom, rgba(16,185,129,0.5), rgba(16,185,129,0.2)); }
+  .conn-sm.green::after { border-top-color: rgba(16,185,129,0.6); }
+  .conn-sm.amber { background: linear-gradient(to bottom, rgba(245,158,11,0.5), rgba(245,158,11,0.2)); }
+  .conn-sm.amber::after { border-top-color: rgba(245,158,11,0.6); }
+  .conn-sm.cyan  { background: linear-gradient(to bottom, rgba(6,182,212,0.5), rgba(6,182,212,0.2)); }
+  .conn-sm.cyan::after  { border-top-color: rgba(6,182,212,0.6); }
+  .conn-sm.red   { background: linear-gradient(to bottom, rgba(239,68,68,0.5), rgba(239,68,68,0.2)); }
+  .conn-sm.red::after   { border-top-color: rgba(239,68,68,0.6); }
+
+  /* MERGE SECTION */
+  .merge-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 0;
+    width: 100%;
+  }
+
+  .merge-lines {
+    width: 100%;
+    max-width: 900px;
+    height: 40px;
+    position: relative;
+  }
+  .merge-lines svg { width: 100%; height: 100%; overflow: visible; }
+
+  /* RESPONSE BOX */
+  .node-response {
+    background: linear-gradient(135deg, rgba(79,110,247,0.15), rgba(124,58,237,0.1));
+    border: 1.5px solid rgba(79,110,247,0.5);
+    border-radius: 14px;
+    padding: 18px 36px;
+    text-align: center;
+    min-width: 280px;
+    max-width: 400px;
+    box-shadow: 0 0 40px rgba(79,110,247,0.2), inset 0 1px 0 rgba(255,255,255,0.06);
+    position: relative;
+    overflow: hidden;
+  }
+  .node-response::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent), var(--accent3));
+  }
+  .node-response .resp-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .node-response .resp-sub {
+    font-size: 12px;
+    color: var(--accent);
+    margin-top: 3px;
+    font-weight: 500;
+  }
+
+  /* END NODE */
+  .node-circle.end {
+    border-color: var(--accent4);
+    box-shadow: 0 0 30px rgba(16,185,129,0.25), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .node-circle.end .label { color: var(--accent4); }
+
+  /* DIAMOND LEAD */
+  .diamond-sm-wrap {
+    width: 140px;
+    height: 140px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .diamond-sm-shape {
+    width: 96px;
+    height: 96px;
+    background: linear-gradient(145deg, var(--surface2), var(--surface));
+    border: 1.5px solid rgba(16,185,129,0.5);
+    transform: rotate(45deg);
+    box-shadow: 0 0 20px rgba(16,185,129,0.15);
+    position: absolute;
+  }
+  .diamond-sm-label {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #34d399;
+    line-height: 1.3;
+    padding: 0 12px;
+  }
+
+  /* YES label */
+  .yes-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: #34d399;
+    letter-spacing: 0.1em;
+    margin-left: -2px;
+  }
+
+  /* SAVE NODES (with icon) */
+  .node-save {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    width: 100%;
+  }
+  .save-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .save-icon.green-bg { background: rgba(16,185,129,0.15); }
+  .save-icon.amber-bg { background: rgba(245,158,11,0.15); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* STEP NUMBERS */
+  .step-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 20px;
+    height: 20px;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(99,120,255,0.1);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .node-box .node-icon { font-size: 16px; margin-bottom: 2px; }
+
+  /* section labels inside branch */
+  .branch-top-conn {
+    height: 24px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+  }
+  .branch-top-conn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(to bottom, rgba(99,120,255,0.4), rgba(99,120,255,0.2));
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-tag">Sistema de IA · WhatsApp</div>
+    <h1>Flujo de Atención Inteligente</h1>
+    <p>Arquitectura de agentes — Tono Ares</p>
+  </div>
+
+  <div class="flow">
+
+    <!-- 1. ENTRADA -->
+    <div class="node" style="animation-delay:0.05s">
+      <div class="node-circle">
+        <span class="icon">📲</span>
+        <span class="label">Entrada<br>WhatsApp</span>
+      </div>
+    </div>
+    <div class="connector"></div>
+
+    <!-- 2. WEBHOOK -->
+    <div class="node" style="animation-delay:0.1s; position:relative;">
+      <div class="node-box">
+        <div class="node-icon">🔗</div>
+        Webhook Chatwoot
+      </div>
+      <span class="step-badge">1</span>
+    </div>
+    <div class="connector"></div>
+
+    <!-- 3. HISTORIAL -->
+    <div class="node" style="animation-delay:0.15s; position:relative;">
+      <div class="node-box">
+        <div class="node-icon">🧠</div>
+        Recuperar Historial + Contexto
+      </div>
+      <span class="step-badge">2</span>
+    </div>
+    <div class="connector"></div>
+
+    <!-- 4. CLASSIFIER DIAMOND -->
+    <div class="node" style="animation-delay:0.2s">
+      <div class="diamond-wrap">
+        <div class="diamond-shape"></div>
+        <div class="diamond-label">
+          Clasificador IA
+          <small>'Selector de Estado'</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- BRANCHES -->
+    <div class="branch-container">
+
+      <!-- horizontal line connector visual -->
+      <div style="width:100%; max-width:900px; position:relative; height:2px; background: linear-gradient(90deg, transparent 5%, rgba(99,120,255,0.35) 12.5%, rgba(99,120,255,0.35) 87.5%, transparent 95%); margin-bottom:0;"></div>
+
+      <div class="branches">
+
+        <!-- COL 1: VENTAS -->
+        <div class="branch-col">
+          <div class="branch-top-conn"></div>
+          <div class="branch-label label-ventas">Ventas / Alquiler</div>
+          <div class="conn-sm green"></div>
+          <div class="node-box green" style="width:100%; font-size:13px; text-align:center;">
+            <div class="node-icon">🏠</div>
+            Agente Inmobiliario
+          </div>
+          <div class="conn-sm green"></div>
+          <div class="node-db">
+            <span class="db-icon">🗄️</span>
+            <span style="font-size:11px; line-height:1.3;">Google Sheets<br><span style="color:var(--muted); font-weight:400;">Precios · Datos · Fotos</span></span>
+          </div>
+          <div class="conn-sm green"></div>
+          <!-- Diamond lead -->
+          <div class="diamond-sm-wrap">
+            <div class="diamond-sm-shape"></div>
+            <div class="diamond-sm-label">¿Lead<br>Interesado?</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:4px; margin-top:-4px; margin-bottom:4px;">
+            <span class="yes-label">Sí ↓</span>
+          </div>
+          <div class="node-box green" style="width:100%; font-size:12px;">
+            <div class="node-save">
+              <div class="save-icon green-bg">📋</div>
+              <span>Almacenar Lead en Planilla/DB para Seguimiento</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- COL 2: MANTENIMIENTO -->
+        <div class="branch-col">
+          <div class="branch-top-conn"></div>
+          <div class="branch-label label-mant">Mantenimiento</div>
+          <div class="conn-sm amber"></div>
+          <div class="node-box amber" style="width:100%; font-size:13px; text-align:center;">
+            <div class="node-icon">🔧</div>
+            Agente de Soporte Técnico
+          </div>
+          <div class="conn-sm amber"></div>
+          <div class="node-box amber" style="width:100%; font-size:12px; line-height:1.4;">
+            <div style="font-size:11px; color:var(--muted); margin-bottom:3px; font-weight:400;">Recolección de datos</div>
+            Proyecto · Unidad<br>Daño · Fotos
+          </div>
+          <div class="conn-sm amber"></div>
+          <div class="node-box amber" style="width:100%; font-size:12px;">
+            <div class="node-save">
+              <div class="save-icon amber-bg">🎫</div>
+              <span>Generar Ticket de Mantenimiento para Gestión Técnica</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- COL 3: INFORMACIÓN -->
+        <div class="branch-col">
+          <div class="branch-top-conn"></div>
+          <div class="branch-label label-info">Información / FAQ</div>
+          <div class="conn-sm cyan"></div>
+          <div class="node-box cyan" style="width:100%; font-size:13px; text-align:center;">
+            <div class="node-icon">💬</div>
+            Agente de Consultas
+          </div>
+          <div class="conn-sm cyan"></div>
+          <div class="node-box cyan" style="width:100%; font-size:12px; text-align:center; line-height:1.4;">
+            <div style="font-size:11px; color:var(--muted); margin-bottom:3px;">Base de datos</div>
+            Conocimientos<br>Inmobiliaria
+          </div>
+        </div>
+
+        <!-- COL 4: HUMANO -->
+        <div class="branch-col">
+          <div class="branch-top-conn"></div>
+          <div class="branch-label label-humano">Humano</div>
+          <div class="conn-sm red"></div>
+          <div class="node-box red" style="width:100%; font-size:13px; text-align:center;">
+            <div class="node-icon">👤</div>
+            Escalamiento Directo
+          </div>
+          <div class="conn-sm red"></div>
+          <div class="node-box red" style="width:100%; font-size:12px; text-align:center;">
+            <div class="node-icon">🚨</div>
+            Alerta Agente<br>en Chatwoot
+          </div>
+        </div>
+
+      </div>
+
+      <!-- MERGE ARROW -->
+      <div style="width:100%; max-width:900px; position:relative; height:36px; margin-top:4px;">
+        <svg viewBox="0 0 900 36" preserveAspectRatio="none" style="width:100%;height:100%;overflow:visible;">
+          <!-- lines from each col converging to center -->
+          <line x1="112" y1="0" x2="450" y2="36" stroke="rgba(99,120,255,0.35)" stroke-width="1.5"/>
+          <line x1="337" y1="0" x2="450" y2="36" stroke="rgba(99,120,255,0.35)" stroke-width="1.5"/>
+          <line x1="563" y1="0" x2="450" y2="36" stroke="rgba(99,120,255,0.35)" stroke-width="1.5"/>
+          <line x1="788" y1="0" x2="450" y2="36" stroke="rgba(99,120,255,0.35)" stroke-width="1.5"/>
+          <!-- arrowhead -->
+          <polygon points="442,30 450,38 458,30" fill="rgba(99,120,255,0.6)"/>
+        </svg>
+      </div>
+
+    </div>
+
+    <!-- RESPONSE NODE -->
+    <div class="node" style="animation-delay:0.35s;">
+      <div class="node-response">
+        <div class="resp-title">✨ Respuesta Personalizada</div>
+        <div class="resp-sub">'Tono Ares'</div>
+      </div>
+    </div>
+    <div class="connector" style="background: linear-gradient(to bottom, rgba(16,185,129,0.6), rgba(16,185,129,0.2));">
+    </div>
+
+    <!-- 5. WHATSAPP CLIENTE -->
+    <div class="node" style="animation-delay:0.4s">
+      <div class="node-circle end">
+        <span class="icon">📱</span>
+        <span class="label">WhatsApp<br>Cliente</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div> Ventas / Alquiler</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> Mantenimiento</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#22d3ee"></div> Información / FAQ</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f87171"></div> Escalamiento Humano</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#4f6ef7"></div> Flujo Principal</div>
+  </div>
+
+</div>
+</body>
+</html>
